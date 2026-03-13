@@ -17,6 +17,8 @@ coverage/
 local.properties
 *.iml
 captures/
+.android-sdk/
+.tools/
 
 # Python
 __pycache__/
