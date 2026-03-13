@@ -111,10 +111,12 @@ class PriceRepository(
                 }
             }
 
+            val targetPrice = updated.targetPricePaise
+            val lastNotifiedAt = updated.lastNotifiedAt
             val isThresholdReached = newPrice != null &&
-                updated.targetPricePaise != null &&
-                newPrice <= updated.targetPricePaise
-            val canNotify = updated.lastNotifiedAt == null || (now - updated.lastNotifiedAt) >= cooldownMillis
+                targetPrice != null &&
+                newPrice <= targetPrice
+            val canNotify = lastNotifiedAt == null || (now - lastNotifiedAt) >= cooldownMillis
             if (isThresholdReached && canNotify) {
                 updated = updated.copy(lastNotifiedAt = now)
                 onThresholdReached(updated, newPrice!!)
