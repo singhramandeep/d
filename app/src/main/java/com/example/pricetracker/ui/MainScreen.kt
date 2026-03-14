@@ -2,29 +2,44 @@ package com.example.pricetracker.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AssistChip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +48,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.time.Duration
@@ -59,40 +79,68 @@ fun MainScreen(
     onClearMessage: () -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        HeaderSummary(
-            productCount = state.products.size,
-            isRefreshing = state.isRefreshingAll,
-            onRefresh = onRefreshAll,
-            onCopyAll = {
-                clipboardManager.setText(AnnotatedString(buildAllItemsClipboardText(state.products)))
-                onAllItemsCopied(state.products.size)
-            }
-        )
-        Spacer(Modifier.height(12.dp))
-
-        state.pendingSharedUrl?.let { pendingUrl ->
-            PendingShareCard(
-                pendingUrl = pendingUrl,
-                onTrack = onTrackPending,
-                onDismiss = onDismissPending
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("PricePulse", style = MaterialTheme.typography.titleLarge)
+                        Text("${state.products.size} items tracked", style = MaterialTheme.typography.bodySmall)
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(
+                                AnnotatedString(buildAllItemsClipboardText(state.products))
+                            )
+                            onAllItemsCopied(state.products.size)
+                        },
+                        enabled = state.products.isNotEmpty()
+                    ) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy all tracked items")
+                    }
+                }
             )
-            Spacer(Modifier.height(12.dp))
         }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                HeaderSummary(
+                    productCount = state.products.size,
+                    isRefreshing = state.isRefreshingAll,
+                    onRefresh = onRefreshAll
+                )
+            }
 
-        state.message?.let { message ->
-            InfoMessage(message = message, onDismiss = onClearMessage)
-            Spacer(Modifier.height(12.dp))
-        }
+            state.pendingSharedUrl?.let { pendingUrl ->
+                item {
+                    PendingShareCard(
+                        pendingUrl = pendingUrl,
+                        onTrack = onTrackPending,
+                        onDismiss = onDismissPending
+                    )
+                }
+            }
 
-        if (state.products.isEmpty()) {
-            EmptyState()
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            state.message?.let { message ->
+                item {
+                    InfoMessage(message = message, onDismiss = onClearMessage)
+                }
+            }
+
+            if (state.products.isEmpty()) {
+                item { EmptyState() }
+            } else {
                 items(items = state.products, key = { it.id }) { product ->
                     ProductCard(
                         product = product,
@@ -111,20 +159,31 @@ fun MainScreen(
 private fun HeaderSummary(
     productCount: Int,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-    onCopyAll: () -> Unit
+    onRefresh: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Column {
-            Text("PricePulse", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("$productCount items", style = MaterialTheme.typography.bodyMedium)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = onRefresh, enabled = !isRefreshing) {
-                Text(if (isRefreshing) "Checking all..." else "Check all prices")
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "$productCount items in watchlist",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Track price drops across Amazon, Flipkart and more.",
+                style = MaterialTheme.typography.bodySmall
+            )
+            FilledTonalButton(onClick = onRefresh, enabled = !isRefreshing) {
+                Icon(Icons.Rounded.Refresh, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (isRefreshing) "Checking all prices..." else "Check all prices now")
             }
-            TextButton(onClick = onCopyAll, enabled = productCount > 0) {
-                Text("Copy all items")
+            if (isRefreshing) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
         }
     }
@@ -137,7 +196,7 @@ private fun PendingShareCard(
     onDismiss: () -> Unit
 ) {
     var thresholdText by remember { mutableStateOf("") }
-    Card(
+    ElevatedCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -167,7 +226,7 @@ private fun InfoMessage(
     message: String,
     onDismiss: () -> Unit
 ) {
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -185,7 +244,7 @@ private fun InfoMessage(
 
 @Composable
 private fun EmptyState() {
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
@@ -206,13 +265,16 @@ private fun ProductCard(
     onRemove: (Long) -> Unit
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     var isExpanded by rememberSaveable(product.id) { mutableStateOf(false) }
     var targetText by remember(product.id, product.targetPricePaise) {
         mutableStateOf(product.targetPricePaise?.let { "%.2f".format(it / 100.0) } ?: "")
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,17 +286,18 @@ private fun ProductCard(
                     product.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = if (isExpanded) 3 else 2,
+                    maxLines = if (isExpanded) 4 else 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                TextButton(onClick = { isExpanded = !isExpanded }) {
-                    Text(if (isExpanded) "Collapse" else "Expand")
+                IconButton(onClick = { isExpanded = !isExpanded }) {
+                    val icon = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore
+                    Icon(icon, contentDescription = if (isExpanded) "Collapse" else "Expand")
                 }
             }
             if (isExpanded) {
                 ProductImage(imageUrl = product.imageUrl)
-                Text(product.source, style = MaterialTheme.typography.labelMedium)
+                Text(product.source, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 Text(
                     "Last checked price: ${product.currentPricePaise?.let { inr(it) } ?: "N/A"}",
                     style = MaterialTheme.typography.bodyMedium
@@ -245,6 +308,8 @@ private fun ProductCard(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { onCheckNow(product.id) }, enabled = !isRefreshing) {
+                        Icon(Icons.Rounded.Refresh, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
                         Text(if (isRefreshing) "Checking..." else "Check price now")
                     }
                     TextButton(
@@ -253,10 +318,12 @@ private fun ProductCard(
                             context.startActivity(intent)
                         }
                     ) {
+                        Icon(Icons.Rounded.Link, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
                         Text("Open")
                     }
                 }
-                PriceHistoryPlaceholder(product.history)
+                PriceHistorySection(product.history)
                 OutlinedTextField(
                     value = targetText,
                     onValueChange = { targetText = it },
@@ -265,10 +332,9 @@ private fun ProductCard(
                     singleLine = true
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AssistChip(
-                        onClick = { onUpdateTarget(product.id, targetText) },
-                        label = { Text("Save target") }
-                    )
+                    Button(onClick = { onUpdateTarget(product.id, targetText) }) {
+                        Text("Save target")
+                    }
                     TextButton(
                         onClick = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -278,9 +344,20 @@ private fun ProductCard(
                             context.startActivity(Intent.createChooser(shareIntent, "Share product link"))
                         }
                     ) {
+                        Icon(Icons.Rounded.Share, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
                         Text("Share link")
                     }
+                    TextButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(product.url))
+                        }
+                    ) {
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = null)
+                    }
                     TextButton(onClick = { onRemove(product.id) }) {
+                        Icon(Icons.Rounded.Delete, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
                         Text("Remove")
                     }
                 }
@@ -304,36 +381,91 @@ private fun ProductImage(imageUrl: String?) {
         }
         return
     }
-    AsyncImage(
-        model = imageUrl,
-        contentDescription = "Product image",
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .clip(RoundedCornerShape(8.dp))
-    )
+    Surface(shape = RoundedCornerShape(8.dp)) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = "Product image",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        )
+    }
 }
 
 @Composable
-private fun PriceHistoryPlaceholder(history: List<Long>) {
-    Card(
+private fun PriceHistorySection(history: List<PricePointUiModel>) {
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("Price history", fontWeight = FontWeight.Medium)
-            Text("Chart placeholder (coming soon)", style = MaterialTheme.typography.bodySmall)
-            val recent = history.takeLast(6)
-            if (recent.isNotEmpty()) {
-                Text(
-                    "Recent: ${recent.joinToString(" • ") { inr(it) }}",
-                    style = MaterialTheme.typography.bodySmall
-                )
+            if (history.isEmpty()) {
+                Text("No history yet. Tap “Check price now” to fetch the first point.")
             } else {
-                Text("No history yet.", style = MaterialTheme.typography.bodySmall)
+                Sparkline(history = history)
+                history.takeLast(4).reversed().forEach { point ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(inr(point.pricePaise), style = MaterialTheme.typography.bodySmall)
+                        Text(formatRelativeTime(point.checkedAt), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun Sparkline(history: List<PricePointUiModel>) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val prices = history.map { it.pricePaise.toFloat() }
+    val minPrice = prices.minOrNull() ?: return
+    val maxPrice = prices.maxOrNull() ?: return
+    val range = (maxPrice - minPrice).takeIf { it > 0f } ?: 1f
+
+    androidx.compose.foundation.Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(vertical = 4.dp)
+    ) {
+        if (prices.size == 1) {
+            drawLine(
+                color = primaryColor.copy(alpha = 0.35f),
+                start = Offset(0f, size.height / 2f),
+                end = Offset(size.width, size.height / 2f),
+                strokeWidth = 3f
+            )
+            drawCircle(
+                color = primaryColor,
+                radius = 6f,
+                center = Offset(size.width / 2f, size.height / 2f)
+            )
+            return@Canvas
+        }
+
+        val spacing = size.width / (prices.size - 1).coerceAtLeast(1)
+        val path = Path()
+        prices.forEachIndexed { index, price ->
+            val x = spacing * index
+            val normalized = (price - minPrice) / range
+            val y = size.height - (normalized * size.height)
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+
+        drawRect(
+            color = primaryColor.copy(alpha = 0.08f),
+            size = Size(size.width, size.height)
+        )
+        drawPath(
+            path = path,
+            color = primaryColor,
+            style = Stroke(width = 5f, cap = StrokeCap.Round)
+        )
     }
 }
 
@@ -367,6 +499,6 @@ private fun formatRelativeTime(epochMillis: Long): String {
 
 private fun buildAllItemsClipboardText(products: List<ProductUiModel>): String {
     return products.mapIndexed { index, product ->
-        "${index + 1}. ${product.title}\n${product.url}"
+        "${index + 1}. ${product.title}\n${product.url}\nPrice: ${product.currentPricePaise?.let { inr(it) } ?: "N/A"}"
     }.joinToString(separator = "\n\n")
 }

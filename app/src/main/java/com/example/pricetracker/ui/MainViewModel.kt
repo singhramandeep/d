@@ -22,7 +22,12 @@ data class ProductUiModel(
     val currentPricePaise: Long?,
     val targetPricePaise: Long?,
     val lastCheckedAt: Long,
-    val history: List<Long>
+    val history: List<PricePointUiModel>
+)
+
+data class PricePointUiModel(
+    val pricePaise: Long,
+    val checkedAt: Long
 )
 
 data class MainUiState(
@@ -54,7 +59,12 @@ class MainViewModel(
                         lastCheckedAt = item.product.lastCheckedAt,
                         history = item.history
                             .sortedBy { it.checkedAt }
-                            .map { it.pricePaise }
+                            .map {
+                                PricePointUiModel(
+                                    pricePaise = it.pricePaise,
+                                    checkedAt = it.checkedAt
+                                )
+                            }
                     )
                 }
                 _uiState.update { it.copy(products = mapped) }
