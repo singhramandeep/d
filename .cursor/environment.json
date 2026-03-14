@@ -1,0 +1,4 @@
+{
+  "install": "bash .cursor/scripts/install-android-sdk.sh",
+  "start": "bash .cursor/scripts/start-android-env.sh"
+}

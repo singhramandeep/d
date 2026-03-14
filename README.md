@@ -42,6 +42,23 @@ PricePulse is an Android app that lets you share product links from other apps (
 4. Share any product link (text URL) to PricePulse.
 5. Add target price and refresh.
 
+## Cloud agent Android setup
+
+This repository includes Cursor cloud environment bootstrap at:
+
+- `.cursor/environment.json`
+- `.cursor/scripts/install-android-sdk.sh`
+- `.cursor/scripts/start-android-env.sh`
+
+On first run it installs:
+
+- Android commandline tools
+- `platform-tools`
+- `build-tools;35.0.0`
+- `platforms;android-35`
+
+and writes `local.properties` so `./gradlew` builds work without manual SDK configuration.
+
 ## Important notes
 
 - E-commerce sites can change HTML frequently; selectors may need periodic updates.
