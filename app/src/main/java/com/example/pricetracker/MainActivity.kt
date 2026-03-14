@@ -33,11 +33,13 @@ class MainActivity : ComponentActivity() {
             val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
             MainScreen(
                 state = uiState,
-                onRefresh = viewModel::refreshNow,
+                onRefreshAll = viewModel::refreshAllNow,
                 onTrackPending = viewModel::trackPendingUrl,
                 onDismissPending = viewModel::clearPendingUrl,
+                onCheckProductNow = viewModel::refreshProductNow,
                 onUpdateTarget = viewModel::updateTargetPrice,
                 onRemoveProduct = viewModel::removeProduct,
+                onAllItemsCopied = viewModel::onAllItemsCopied,
                 onClearMessage = viewModel::clearMessage
             )
         }

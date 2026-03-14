@@ -13,6 +13,7 @@ data class TrackedProductEntity(
     val url: String,
     val source: String,
     val title: String,
+    val imageUrl: String?,
     val currentPricePaise: Long?,
     val targetPricePaise: Long?,
     val lastCheckedAt: Long,

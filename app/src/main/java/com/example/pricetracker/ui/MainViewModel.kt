@@ -18,6 +18,7 @@ data class ProductUiModel(
     val title: String,
     val url: String,
     val source: String,
+    val imageUrl: String?,
     val currentPricePaise: Long?,
     val targetPricePaise: Long?,
     val lastCheckedAt: Long,
@@ -28,7 +29,8 @@ data class MainUiState(
     val products: List<ProductUiModel> = emptyList(),
     val pendingSharedUrl: String? = null,
     val message: String? = null,
-    val isRefreshing: Boolean = false
+    val isRefreshingAll: Boolean = false,
+    val refreshingProductIds: Set<Long> = emptySet()
 )
 
 class MainViewModel(
@@ -46,6 +48,7 @@ class MainViewModel(
                         title = item.product.title,
                         url = item.product.url,
                         source = item.product.source,
+                        imageUrl = item.product.imageUrl,
                         currentPricePaise = item.product.currentPricePaise,
                         targetPricePaise = item.product.targetPricePaise,
                         lastCheckedAt = item.product.lastCheckedAt,
@@ -105,15 +108,44 @@ class MainViewModel(
         }
     }
 
-    fun refreshNow() {
+    fun refreshAllNow() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isRefreshing = true, message = null) }
+            _uiState.update { it.copy(isRefreshingAll = true, message = null) }
             runCatching { repository.refreshAllPrices() }
                 .onSuccess {
-                    _uiState.update { it.copy(isRefreshing = false, message = "Prices refreshed.") }
+                    _uiState.update { it.copy(isRefreshingAll = false, message = "Prices refreshed for all items.") }
                 }
                 .onFailure {
-                    _uiState.update { it.copy(isRefreshing = false, message = "Refresh failed. Try again later.") }
+                    _uiState.update { it.copy(isRefreshingAll = false, message = "Refresh failed. Try again later.") }
+                }
+        }
+    }
+
+    fun refreshProductNow(productId: Long) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    refreshingProductIds = it.refreshingProductIds + productId,
+                    message = null
+                )
+            }
+            runCatching { repository.refreshProductPrice(productId) }
+                .onSuccess { refreshed ->
+                    val message = if (refreshed) "Price checked." else "Product not found."
+                    _uiState.update {
+                        it.copy(
+                            refreshingProductIds = it.refreshingProductIds - productId,
+                            message = message
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(
+                            refreshingProductIds = it.refreshingProductIds - productId,
+                            message = "Could not refresh this item."
+                        )
+                    }
                 }
         }
     }
@@ -131,6 +163,10 @@ class MainViewModel(
             repository.deleteProduct(productId)
             _uiState.update { it.copy(message = "Product removed.") }
         }
+    }
+
+    fun onAllItemsCopied(count: Int) {
+        _uiState.update { it.copy(message = "Copied $count items to clipboard.") }
     }
 
     private fun extractFirstUrl(text: String): String? {

@@ -26,6 +26,7 @@ class PriceRepository(
         val scraped = scraper.scrape(url)
 
         val title = scraped?.title ?: existing?.title ?: source
+        val imageUrl = scraped?.imageUrl ?: existing?.imageUrl
         val currentPrice = scraped?.pricePaise ?: existing?.currentPricePaise
 
         val entity = if (existing == null) {
@@ -33,6 +34,7 @@ class PriceRepository(
                 url = url,
                 source = source,
                 title = title,
+                imageUrl = imageUrl,
                 currentPricePaise = currentPrice,
                 targetPricePaise = targetPricePaise,
                 lastCheckedAt = now
@@ -41,6 +43,7 @@ class PriceRepository(
             existing.copy(
                 source = source,
                 title = title,
+                imageUrl = imageUrl,
                 currentPricePaise = currentPrice,
                 targetPricePaise = targetPricePaise ?: existing.targetPricePaise,
                 lastCheckedAt = now
@@ -84,46 +87,19 @@ class PriceRepository(
         onThresholdReached: suspend (TrackedProductEntity, Long) -> Unit = { _, _ -> }
     ) {
         val productDao = database.productDao()
-        val historyDao = database.priceHistoryDao()
-        val cooldownMillis = TimeUnit.HOURS.toMillis(6)
-        val now = System.currentTimeMillis()
-
         productDao.getAll().forEach { product ->
-            val scraped = scraper.scrape(product.url)
-            val newPrice = scraped?.pricePaise ?: product.currentPricePaise
-            val newTitle = scraped?.title ?: product.title
-            var updated = product.copy(
-                title = newTitle,
-                currentPricePaise = newPrice,
-                lastCheckedAt = now
-            )
-
-            if (newPrice != null) {
-                val latestHistory = historyDao.latestForProduct(product.id)
-                if (latestHistory == null || latestHistory.pricePaise != newPrice) {
-                    historyDao.insert(
-                        com.example.pricetracker.data.local.PriceHistoryEntity(
-                            productId = product.id,
-                            pricePaise = newPrice,
-                            checkedAt = now
-                        )
-                    )
-                }
-            }
-
-            val targetPrice = updated.targetPricePaise
-            val lastNotifiedAt = updated.lastNotifiedAt
-            val isThresholdReached = newPrice != null &&
-                targetPrice != null &&
-                newPrice <= targetPrice
-            val canNotify = lastNotifiedAt == null || (now - lastNotifiedAt) >= cooldownMillis
-            if (isThresholdReached && canNotify) {
-                updated = updated.copy(lastNotifiedAt = now)
-                onThresholdReached(updated, newPrice!!)
-            }
-
-            productDao.update(updated)
+            refreshProduct(product, onThresholdReached)
         }
+    }
+
+    suspend fun refreshProductPrice(
+        productId: Long,
+        onThresholdReached: suspend (TrackedProductEntity, Long) -> Unit = { _, _ -> }
+    ): Boolean {
+        val productDao = database.productDao()
+        val product = productDao.getById(productId) ?: return false
+        refreshProduct(product, onThresholdReached)
+        return true
     }
 
     private fun sourceFromUrl(url: String): String {
@@ -137,6 +113,54 @@ class PriceRepository(
         val regex = Regex("(https?://[^\\s]+)")
         val rawUrl = regex.find(text)?.groupValues?.getOrNull(1) ?: return null
         return rawUrl.trim().trimEnd(',', '.', ')', ']', '"', '\'')
+    }
+
+    private suspend fun refreshProduct(
+        product: TrackedProductEntity,
+        onThresholdReached: suspend (TrackedProductEntity, Long) -> Unit
+    ) {
+        val productDao = database.productDao()
+        val historyDao = database.priceHistoryDao()
+        val cooldownMillis = TimeUnit.HOURS.toMillis(6)
+        val now = System.currentTimeMillis()
+
+        val scraped = scraper.scrape(product.url)
+        val newPrice = scraped?.pricePaise ?: product.currentPricePaise
+        val newTitle = scraped?.title ?: product.title
+        val newImageUrl = scraped?.imageUrl ?: product.imageUrl
+
+        var updated = product.copy(
+            title = newTitle,
+            imageUrl = newImageUrl,
+            currentPricePaise = newPrice,
+            lastCheckedAt = now
+        )
+
+        if (newPrice != null) {
+            val latestHistory = historyDao.latestForProduct(product.id)
+            if (latestHistory == null || latestHistory.pricePaise != newPrice) {
+                historyDao.insert(
+                    com.example.pricetracker.data.local.PriceHistoryEntity(
+                        productId = product.id,
+                        pricePaise = newPrice,
+                        checkedAt = now
+                    )
+                )
+            }
+        }
+
+        val targetPrice = updated.targetPricePaise
+        val lastNotifiedAt = updated.lastNotifiedAt
+        val isThresholdReached = newPrice != null &&
+            targetPrice != null &&
+            newPrice <= targetPrice
+        val canNotify = lastNotifiedAt == null || (now - lastNotifiedAt) >= cooldownMillis
+        if (isThresholdReached && canNotify) {
+            updated = updated.copy(lastNotifiedAt = now)
+            onThresholdReached(updated, newPrice!!)
+        }
+
+        productDao.update(updated)
     }
 }
 

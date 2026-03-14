@@ -28,7 +28,10 @@ object AppContainer {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "price_pulse.db"
-            ).build().also { db = it }
+            )
+                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .build()
+                .also { db = it }
         }
     }
 }

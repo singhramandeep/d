@@ -9,7 +9,8 @@ import java.util.Locale
 
 data class ScrapedProduct(
     val title: String?,
-    val pricePaise: Long?
+    val pricePaise: Long?,
+    val imageUrl: String?
 )
 
 class ProductScraper(
@@ -39,8 +40,9 @@ class ProductScraper(
             "flipkart.com" in host -> extractFlipkartPrice(document)
             else -> extractGenericPrice(document)
         }
+        val imageUrl = extractImageUrl(document)
 
-        ScrapedProduct(title = title, pricePaise = price)
+        ScrapedProduct(title = title, pricePaise = price, imageUrl = imageUrl)
     }
 
     private fun extractTitle(document: org.jsoup.nodes.Document): String? {
@@ -84,6 +86,32 @@ class ProductScraper(
         val rupeeRegex = Regex("(?:₹|Rs\\.?|INR)\\s*([0-9][0-9,]*(?:\\.\\d{1,2})?)")
         val hit = rupeeRegex.find(document.text())?.groupValues?.getOrNull(1)
         return parsePriceToPaise(hit)
+    }
+
+    private fun extractImageUrl(document: org.jsoup.nodes.Document): String? {
+        val rawCandidates = listOf(
+            document.selectFirst("#landingImage")?.attr("src"),
+            document.selectFirst("#imgBlkFront")?.attr("src"),
+            document.selectFirst("img._396cs4")?.attr("src"),
+            document.selectFirst("meta[property=og:image]")?.attr("content"),
+            document.selectFirst("meta[name=twitter:image]")?.attr("content")
+        )
+
+        rawCandidates.forEach { raw ->
+            val image = normalizeImageUrl(raw)
+            if (!image.isNullOrBlank()) return image
+        }
+        return null
+    }
+
+    private fun normalizeImageUrl(raw: String?): String? {
+        if (raw.isNullOrBlank()) return null
+        val value = raw.trim()
+        if (value.contains(",")) {
+            // Handles srcset-like values by taking the first candidate URL.
+            return value.substringBefore(",").substringBefore(" ").trim()
+        }
+        return value
     }
 
     private fun parsePriceToPaise(raw: String?): Long? {
