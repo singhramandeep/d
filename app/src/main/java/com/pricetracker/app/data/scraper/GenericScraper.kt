@@ -48,7 +48,7 @@ class GenericScraper : PriceScraper {
             metaPrice.toDoubleOrNull()?.let { if (it > 0) return it }
         }
         val pricePattern = "[₹$]\\s*[\\d,]+\\.?\\d*".toRegex()
-        val bodyText = doc.body()?.text() ?: return 0.0
+        val bodyText = doc.body().text()
         val match = pricePattern.find(bodyText)?.value ?: return 0.0
         return match.replace("[^0-9.]".toRegex(), "").toDoubleOrNull() ?: 0.0
     }
