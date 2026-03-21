@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Price Tracker</string>
+    <string name="add_product">Add Product</string>
+    <string name="enter_url">Enter product URL</string>
+    <string name="supported_sites">Supported: Amazon.in, Flipkart, Myntra</string>
+    <string name="track_price">Track Price</string>
+    <string name="price_history">Price History</string>
+    <string name="current_price">Current Price</string>
+    <string name="lowest_price">Lowest Price</string>
+    <string name="highest_price">Highest Price</string>
+    <string name="last_updated">Last Updated</string>
+    <string name="no_products">No products tracked yet.\nTap + to add a product.</string>
+    <string name="loading">Fetching product details…</string>
+    <string name="error_fetch">Could not fetch product details. Please check the URL.</string>
+    <string name="delete_product">Delete Product</string>
+    <string name="refresh">Refresh Price</string>
+    <string name="notification_channel_name">Price Alerts</string>
+    <string name="notification_channel_desc">Notifications for price changes</string>
+    <string name="price_dropped">Price Dropped!</string>
+    <string name="price_increased">Price Increased</string>
+    <string name="open_in_browser">Open in Browser</string>
+</resources>
