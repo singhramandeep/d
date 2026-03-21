@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#1B5E20</color>
+    <string name="add_product">Add Product</string>
+    <string name="app_name">Price Tracker</string>
+    <string name="check_interval">Price Check Interval</string>
+    <string name="current_price">Current Price</string>
+    <string name="delete_product">Delete Product</string>
+    <string name="error_fetch_failed">Failed to fetch product details. Please try again.</string>
+    <string name="error_invalid_url">Please enter a valid product URL</string>
+    <string name="fetching_details">Fetching product details...</string>
+    <string name="no_products">No products tracked yet.\nAdd a product URL to start tracking.</string>
+    <string name="notification_channel_desc">Notifications when product prices drop</string>
+    <string name="notification_channel_name">Price Alerts</string>
+    <string name="notifications_enabled">Enable Notifications</string>
+    <string name="original_price">Original Price</string>
+    <string name="price_drop_title">Price Drop Alert!</string>
+    <string name="price_history">Price History</string>
+    <string name="product_url_hint">Paste product URL (Amazon, Flipkart, Myntra)</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Settings</string>
+    <string name="track_price">Track Price</string>
+    <style name="Theme.PriceTracker" parent="android:Theme.Material.Light.NoActionBar"/>
+</resources>
