@@ -29,8 +29,8 @@ An Android app built with Kotlin + Jetpack Compose (Material 3) to track product
 ## Build instructions
 
 ```bash
-./gradle-8.7/bin/gradle testDebugUnitTest
-./gradle-8.7/bin/gradle assembleDebug
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
 ```
 
 Generated APK:
