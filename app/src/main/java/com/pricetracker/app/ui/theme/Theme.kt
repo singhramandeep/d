@@ -2,70 +2,172 @@ package com.pricetracker.app.ui.theme
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
-private val md_theme_light_primary = Color(0xFF6750A4)
-private val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-private val md_theme_light_primaryContainer = Color(0xFFEADDFF)
-private val md_theme_light_onPrimaryContainer = Color(0xFF21005D)
-private val md_theme_light_secondary = Color(0xFF625B71)
-private val md_theme_light_onSecondary = Color(0xFFFFFFFF)
-private val md_theme_light_background = Color(0xFFFFFBFE)
-private val md_theme_light_onBackground = Color(0xFF1C1B1F)
-private val md_theme_light_surface = Color(0xFFFFFBFE)
-private val md_theme_light_onSurface = Color(0xFF1C1B1F)
-private val md_theme_light_error = Color(0xFFB3261E)
-private val md_theme_light_onError = Color(0xFFFFFFFF)
-
-private val md_theme_dark_primary = Color(0xFFD0BCFF)
-private val md_theme_dark_onPrimary = Color(0xFF381E72)
-private val md_theme_dark_primaryContainer = Color(0xFF4F378B)
-private val md_theme_dark_onPrimaryContainer = Color(0xFFEADDFF)
-private val md_theme_dark_secondary = Color(0xFFCCC2DC)
-private val md_theme_dark_onSecondary = Color(0xFF332D41)
-private val md_theme_dark_background = Color(0xFF1C1B1F)
-private val md_theme_dark_onBackground = Color(0xFFE6E1E5)
-private val md_theme_dark_surface = Color(0xFF1C1B1F)
-private val md_theme_dark_onSurface = Color(0xFFE6E1E5)
-private val md_theme_dark_error = Color(0xFFF2B8B5)
-private val md_theme_dark_onError = Color(0xFF601410)
+/*
+ * Material 3 "dashboard template" palette: cool neutrals, one strong accent, clear hierarchy.
+ */
+private val Teal = Color(0xFF0D9488)
+private val TealLight = Color(0xFFCCFBF1)
+private val TealDark = Color(0xFF115E59)
+private val Navy = Color(0xFF0F172A)
+private val Slate = Color(0xFF334155)
+private val Muted = Color(0xFF64748B)
 
 private val LightColorScheme = lightColorScheme(
-    primary = md_theme_light_primary,
-    onPrimary = md_theme_light_onPrimary,
-    primaryContainer = md_theme_light_primaryContainer,
-    onPrimaryContainer = md_theme_light_onPrimaryContainer,
-    secondary = md_theme_light_secondary,
-    onSecondary = md_theme_light_onSecondary,
-    background = md_theme_light_background,
-    onBackground = md_theme_light_onBackground,
-    surface = md_theme_light_surface,
-    onSurface = md_theme_light_onSurface,
-    error = md_theme_light_error,
-    onError = md_theme_light_onError
+    primary = Teal,
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = TealLight,
+    onPrimaryContainer = TealDark,
+    secondary = Slate,
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFF1F5F9),
+    onSecondaryContainer = Navy,
+    tertiary = Color(0xFF6366F1),
+    onTertiary = Color(0xFFFFFFFF),
+    background = Color(0xFFF8FAFC),
+    onBackground = Navy,
+    surface = Color(0xFFFFFFFF),
+    onSurface = Navy,
+    surfaceVariant = Color(0xFFF1F5F9),
+    onSurfaceVariant = Muted,
+    surfaceContainer = Color(0xFFF1F5F9),
+    surfaceContainerHigh = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF1F5F9),
+    outline = Color(0xFFCBD5E1),
+    outlineVariant = Color(0xFFE2E8F0),
+    error = Color(0xFFDC2626),
+    onError = Color(0xFFFFFFFF)
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = md_theme_dark_primary,
-    onPrimary = md_theme_dark_onPrimary,
-    primaryContainer = md_theme_dark_primaryContainer,
-    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
-    secondary = md_theme_dark_secondary,
-    onSecondary = md_theme_dark_onSecondary,
-    background = md_theme_dark_background,
-    onBackground = md_theme_dark_onBackground,
-    surface = md_theme_dark_surface,
-    onSurface = md_theme_dark_onSurface,
-    error = md_theme_dark_error,
-    onError = md_theme_dark_onError
+    primary = Color(0xFF5EEAD4),
+    onPrimary = TealDark,
+    primaryContainer = TealDark,
+    onPrimaryContainer = TealLight,
+    secondary = Color(0xFF94A3B8),
+    onSecondary = Navy,
+    secondaryContainer = Color(0xFF334155),
+    onSecondaryContainer = Color(0xFFF1F5F9),
+    tertiary = Color(0xFFA5B4FC),
+    onTertiary = Color(0xFF312E81),
+    background = Color(0xFF0F172A),
+    onBackground = Color(0xFFF8FAFC),
+    surface = Color(0xFF1E293B),
+    onSurface = Color(0xFFF1F5F9),
+    surfaceVariant = Color(0xFF334155),
+    onSurfaceVariant = Color(0xFF94A3B8),
+    surfaceContainer = Color(0xFF1E293B),
+    surfaceContainerHigh = Color(0xFF334155),
+    surfaceContainerLow = Color(0xFF0F172A),
+    outline = Color(0xFF475569),
+    outlineVariant = Color(0xFF334155),
+    error = Color(0xFFF87171),
+    onError = Color(0xFF7F1D1D)
+)
+
+private val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp)
+)
+
+private val AppTypography = Typography(
+    displaySmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 36.sp,
+        lineHeight = 44.sp
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 32.sp,
+        lineHeight = 40.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 32.sp
+    ),
+    titleLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp
+    ),
+    labelMedium = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 11.sp,
+        lineHeight = 16.sp
+    )
 )
 
 @Composable
@@ -75,7 +177,7 @@ fun PriceTrackerTheme(
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
-    val view = LocalView.current
+    val view = androidx.compose.ui.platform.LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
@@ -86,6 +188,8 @@ fun PriceTrackerTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = AppTypography,
+        shapes = AppShapes,
         content = content
     )
 }
