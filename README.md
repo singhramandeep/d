@@ -18,10 +18,15 @@ A modern Android app built with Material 3 that tracks product prices from Flipk
 
 ## Installation
 
-1. Download `PriceTracker-debug.apk` (or build from source)
-2. On your Android device, enable "Install from unknown sources"
-3. Install the APK
-4. Grant notification permission when prompted (for price drop alerts)
+### Download the APK (mobile / browser)
+
+1. On GitHub, open this repository and go to the **`releases`** folder in the file tree, or use this direct path: **`releases/PriceTracker-debug.apk`**
+2. Open the file, tap **View raw** or **Download** (browser: long-press the **Raw** link and save the file, or use GitHub’s download button on the file page)
+3. On your Android device, open the downloaded file from **Downloads** and install
+4. If needed, allow **Install unknown apps** for your browser or Files app
+5. Grant **notification** permission when prompted (for price drop alerts)
+
+The debug APK in the repo is a convenience build; for production, sign a release build locally.
 
 ## Building from Source
 
