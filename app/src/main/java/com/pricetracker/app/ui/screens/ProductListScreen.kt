@@ -42,9 +42,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.pricetracker.app.data.Product
 import com.pricetracker.app.data.ProductRepository
+import com.pricetracker.app.ui.components.SafeProductImage
 import com.pricetracker.app.ui.components.TemplateScreenBackground
 import kotlinx.coroutines.launch
 
@@ -148,7 +148,7 @@ fun ProductListScreen(
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.weight(1f),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
                         start = 20.dp,
                         end = 20.dp,
@@ -203,8 +203,8 @@ private fun ProductCard(
                     )
                 }
             } else {
-                AsyncImage(
-                    model = product.imageUrl,
+                SafeProductImage(
+                    imageUrl = product.imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .size(80.dp)

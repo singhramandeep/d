@@ -81,9 +81,11 @@ fun AddProductScreen(
                     titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
+            // Do not use weight() with verticalScroll: child of scrollable is unbounded; weight causes
+            // layout exception when navigating back after add (invalid constraints).
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxSize()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
                     .verticalScroll(rememberScrollState())
             ) {

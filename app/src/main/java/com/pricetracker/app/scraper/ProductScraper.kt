@@ -48,13 +48,13 @@ object ProductScraper {
                 .get()
 
             val result = when (source) {
-                "flipkart" -> scrapeFlipkart(doc)
-                "amazon" -> scrapeAmazon(doc)
-                "myntra" -> scrapeMyntra(doc)
+                "flipkart" -> scrapeFlipkart(doc, url, source)
+                "amazon" -> scrapeAmazon(doc, url, source)
+                "myntra" -> scrapeMyntra(doc, url, source)
                 else -> null
             }
 
-            result?.let { Result.success(it) }
+            result?.let { Result.success(sanitizeScraped(it, url, source)) }
                 ?: Result.failure(Exception("Could not extract product data"))
         } catch (e: Exception) {
             Log.e(TAG, "Scrape failed for $url", e)
@@ -62,7 +62,36 @@ object ProductScraper {
         }
     }
 
-    private fun scrapeFlipkart(doc: org.jsoup.nodes.Document): ScrapedProduct? {
+    /** Ensures a non-null, insert-safe product: Coil and Room need valid strings and price > 0. */
+    private fun sanitizeScraped(
+        scraped: ScrapedProduct,
+        @Suppress("UNUSED_PARAMETER") url: String,
+        source: String
+    ): ScrapedProduct {
+        var title = scraped.title.trim().ifEmpty { "Product" }
+        if (title.length > 500) title = title.take(500)
+        var description = scraped.description
+        if (description.length > 2000) description = description.take(2000)
+        val imageUrl = normalizeImageUrl(scraped.imageUrl)
+        var price = scraped.price
+        if (price <= 0) price = 0.01
+        val orig = scraped.originalPrice?.takeIf { it > price }
+        return ScrapedProduct(title, description, imageUrl, price, orig, source)
+    }
+
+    private fun normalizeImageUrl(url: String): String {
+        val t = url.trim()
+        if (t.isEmpty()) return ""
+        if (t.startsWith("//")) return "https:$t"
+        if (!t.startsWith("http", ignoreCase = true)) return ""
+        return t
+    }
+
+    private fun scrapeFlipkart(
+        doc: org.jsoup.nodes.Document,
+        @Suppress("UNUSED_PARAMETER") _url: String,
+        source: String
+    ): ScrapedProduct? {
         val title = doc.select("meta[property=og:title]").attr("content")
             .ifEmpty { doc.select("span.B_NuCI").first()?.text() ?: "" }
         val imageUrl = doc.select("meta[property=og:image]").attr("content")
@@ -90,12 +119,16 @@ object ProductScraper {
             originalPrice = parsePrice(it).takeIf { p -> p > 0 }
         }
 
-        return if (title.isNotEmpty() && price > 0) {
-            ScrapedProduct(title, description, imageUrl, price, originalPrice, "flipkart")
+        return if (title.isNotEmpty()) {
+            ScrapedProduct(title, description, imageUrl, price, originalPrice, source)
         } else null
     }
 
-    private fun scrapeAmazon(doc: org.jsoup.nodes.Document): ScrapedProduct? {
+    private fun scrapeAmazon(
+        doc: org.jsoup.nodes.Document,
+        @Suppress("UNUSED_PARAMETER") _url: String,
+        source: String
+    ): ScrapedProduct? {
         val title = doc.select("meta[property=og:title]").attr("content")
             .ifEmpty { doc.select("#productTitle").first()?.text()?.trim() ?: "" }
         val imageUrl = doc.select("meta[property=og:image]").attr("content")
@@ -122,18 +155,30 @@ object ProductScraper {
                 if (it.isNotEmpty()) price = it.toDoubleOrNull() ?: 0.0
             }
         }
-
-        var originalPrice: Double? = null
-        doc.select("span.a-text-price[data-a-strike=true]").first()?.text()?.let {
-            originalPrice = parsePrice(it).takeIf { p -> p > 0 }
+        if (price == 0.0) {
+            doc.select("div[data-csa-c-slot-id=\"apex_dp_offer_display\"] .a-price .a-offscreen")
+                .firstOrNull()?.text()?.let { price = parsePrice(it) }
         }
 
-        return if (title.isNotEmpty() && price > 0) {
-            ScrapedProduct(title, description, imageUrl, price, originalPrice, "amazon")
+        var originalPrice: Double? = null
+        doc.select("span.a-text-price").firstOrNull { it.classNames().toString().contains("strike", true) }
+            ?.text()?.let { originalPrice = parsePrice(it).takeIf { p -> p > 0 } }
+        if (originalPrice == null) {
+            doc.select("span.a-text-price[data-a-strike=true]").first()?.text()?.let {
+                originalPrice = parsePrice(it).takeIf { p -> p > 0 }
+            }
+        }
+
+        return if (title.isNotEmpty()) {
+            ScrapedProduct(title, description, imageUrl, price, originalPrice, source)
         } else null
     }
 
-    private fun scrapeMyntra(doc: org.jsoup.nodes.Document): ScrapedProduct? {
+    private fun scrapeMyntra(
+        doc: org.jsoup.nodes.Document,
+        @Suppress("UNUSED_PARAMETER") _url: String,
+        source: String
+    ): ScrapedProduct? {
         val title = doc.select("meta[property=og:title]").attr("content")
             .ifEmpty { doc.select("h1.pdp-title").first()?.text()?.trim() ?: "" }
         val imageUrl = doc.select("meta[property=og:image]").attr("content")
@@ -161,8 +206,8 @@ object ProductScraper {
             originalPrice = parsePrice(it).takeIf { p -> p > 0 }
         }
 
-        return if (title.isNotEmpty() && price > 0) {
-            ScrapedProduct(title, description, imageUrl, price, originalPrice, "myntra")
+        return if (title.isNotEmpty()) {
+            ScrapedProduct(title, description, imageUrl, price, originalPrice, source)
         } else null
     }
 

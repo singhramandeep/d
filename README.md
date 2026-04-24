@@ -28,6 +28,8 @@ A modern Android app built with Material 3 that tracks product prices from Flipk
 
 The debug APK in the repo is a convenience build; for production, sign a release build locally.
 
+**Update:** The tracked APK is rebuilt when we fix install/runtime issues. Re-download if you had crashes after adding a product.
+
 ## Building from Source
 
 ### Prerequisites

@@ -43,7 +43,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import com.pricetracker.app.ui.components.SafeProductImage
 import com.pricetracker.app.data.PriceHistory
 import com.pricetracker.app.data.Product
 import com.pricetracker.app.data.ProductRepository
@@ -125,7 +125,7 @@ fun ProductDetailScreen(
                 val p = product!!
                 Column(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                 ) {
                     Card(
@@ -146,8 +146,8 @@ fun ProductDetailScreen(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 ) {
-                                    AsyncImage(
-                                        model = p.imageUrl,
+                                    SafeProductImage(
+                                        imageUrl = p.imageUrl,
                                         contentDescription = null,
                                         modifier = Modifier
                                             .fillMaxWidth()
